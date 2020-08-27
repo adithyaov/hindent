@@ -138,6 +138,9 @@ inter sep ps =
 lined :: [Printer ()] -> Printer ()
 lined ps = sequence_ (intersperse newline ps)
 
+lined2 :: [Printer ()] -> Printer ()
+lined2 ps = sequence_ (intersperse (newline >> newline) ps)
+
 -- | Print all the printers separated newlines and optionally a line
 -- prefix.
 prefixedLined :: String -> [Printer ()] -> Printer ()
@@ -494,11 +497,9 @@ exp (If _ if' then' else') =
   do depend (write "if ")
             (pretty if')
      newline
-     indentSpaces <- getIndentSpaces
-     indented indentSpaces
-              (do branch "then " then'
-                  newline
-                  branch "else " else')
+     (do branch "then " then'
+         newline
+         branch "else " else')
      -- Special handling for do.
   where branch str e =
           case e of
@@ -1016,10 +1017,18 @@ instance Pretty Unpackedness where
   prettyInternal (NoUnpackPragma _) = return ()
 
 instance Pretty Binds where
-  prettyInternal x =
-    case x of
-      BDecls _ ds -> lined (map pretty ds)
-      IPBinds _ i -> lined (map pretty i)
+    prettyInternal x =
+        case x of
+          BDecls _ ds -> nlAFP ds
+          IPBinds _ i -> lined (map pretty i)
+      where
+      nlAFP [] = return ()
+      nlAFP [x] = pretty x
+      nlAFP (x1:xs) =
+        case x1 of
+          (FunBind  _ _) -> pretty x1 >> newline >> newline
+          (PatBind  _ _ _ _) -> pretty x1 >> newline >> newline
+          _ -> pretty x1 >> newline
 
 instance Pretty ClassDecl where
   prettyInternal x =
@@ -2070,10 +2079,13 @@ ifFitsOnOneLineOrElse a b = do
 bindingGroup :: Binds NodeInfo -> Printer ()
 bindingGroup binds =
   do newline
-     indented 2
+     newline
+     indentSpaces <- getIndentSpaces
+     indented indentSpaces
               (do write "where"
                   newline
-                  indented 2 (pretty binds))
+                  newline
+                  pretty binds)
 
 infixApp :: Exp NodeInfo
          -> Exp NodeInfo
