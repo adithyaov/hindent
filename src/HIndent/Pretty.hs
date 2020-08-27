@@ -1019,16 +1019,23 @@ instance Pretty Unpackedness where
 instance Pretty Binds where
     prettyInternal x =
         case x of
-          BDecls _ ds -> nlAFP ds
-          IPBinds _ i -> lined (map pretty i)
-      where
-      nlAFP [] = return ()
-      nlAFP [x] = pretty x
-      nlAFP (x1:xs) =
-        case x1 of
-          (FunBind  _ _) -> pretty x1 >> newline >> newline
-          (PatBind  _ _ _ _) -> pretty x1 >> newline >> newline
-          _ -> pretty x1 >> newline
+            BDecls _ ds -> nlAFP ds
+            IPBinds _ i -> lined (map pretty i)
+
+        where
+
+        nlAFP [] = return ()
+        nlAFP [x] = pretty x
+        nlAFP (x1:x2:xs) =
+            case x1 of
+                (FunBind _ _) ->
+                    pretty x1 >> newline >> newline >> nlAFP (x2 : xs)
+                (PatBind _ _ _ _) ->
+                    case x2 of
+                        (PatBind _ _ _ _) ->
+                            pretty x1 >> newline >> nlAFP (x2 : xs)
+                        _ -> pretty x1 >> newline >> newline >> nlAFP (x2 : xs)
+                _ -> pretty x1 >> newline >> nlAFP (x2 : xs)
 
 instance Pretty ClassDecl where
   prettyInternal x =

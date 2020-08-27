@@ -1,5 +1,17 @@
 *.o
 *.hi
+# Build files/directories
+/.stack-work/
+/dist/
+/dist-newstyle/
+
+# Local GHC and Cabal related files
+.ghc.environment*
+cabal.project.local
+
+# Temp files created by Vim/Neovim
+*.swp
+*.swo
 *~
 dist/
 cabal-dev/
@@ -13,3 +25,6 @@ src/main/TestGenerate
 .stack-work
 .cabal-sandbox/
 cabal.sandbox.config
+
+# Other
+.log
