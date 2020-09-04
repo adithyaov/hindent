@@ -2057,16 +2057,17 @@ isLineBreak _ = return False
 
 -- | Does printing the given thing overflow column limit? (e.g. 80)
 fitsOnOneLine :: Printer a -> Printer (Maybe PrintState)
-fitsOnOneLine p =
-  do st <- get
-     put st { psFitOnOneLine = True}
-     ok <- fmap (const True) p <|> return False
-     st' <- get
-     put st
-     guard $ ok || not (psFitOnOneLine st)
-     return (if ok
-                then Just st' { psFitOnOneLine = psFitOnOneLine st }
-                else Nothing)
+fitsOnOneLine p = do
+    st <- get
+    put st {psFitOnOneLine = True}
+    ok <- fmap (const True) p <|> return False
+    st' <- get
+    put st
+    guard $ ok || not (psFitOnOneLine st)
+    return
+        (if ok
+         then Just st' {psFitOnOneLine = psFitOnOneLine st}
+         else Nothing)
 
 -- | If first printer fits, use it, else use the second one.
 ifFitsOnOneLineOrElse :: Printer a -> Printer a -> Printer a
@@ -2094,52 +2095,50 @@ bindingGroup binds =
                   newline
                   pretty binds)
 
+
 infixApp :: Exp NodeInfo
          -> Exp NodeInfo
          -> QOp NodeInfo
          -> Exp NodeInfo
          -> Maybe Int64
          -> Printer ()
-infixApp e a op b indent =
-  hor `ifFitsOnOneLineOrElse` ver
-  where
+infixApp e a op b indent = hor `ifFitsOnOneLineOrElse` ver
+
+    where
+
     hor =
-      spaced
-        [ case link of
-          OpChainExp e' -> pretty e'
-          OpChainLink qop -> pretty qop
-        | link <- flattenOpChain e
-        ]
+        spaced
+            [ case link of
+                OpChainExp e' -> pretty e'
+                OpChainLink qop -> pretty qop
+            | link <- flattenOpChain e
+            ]
     ver = do
-      prettyWithIndent a
-      beforeRhs <- case a of
-                     Do _ _ -> do
-                       indentSpaces <- getIndentSpaces
-                       column (fromMaybe 0 indent + indentSpaces + 3) (newline >> pretty op) -- 3 = "do "
-                       return space
-                     _ -> space >> pretty op >> return newline
-      case b of
-        Lambda{} -> space >> pretty b
-        LCase{} -> space >> pretty b
-        Do _ stmts -> swing (write " do") $ lined (map pretty stmts)
-        _ -> do
-          beforeRhs
-          case indent of
-            Nothing -> do
-              col <- fmap (psColumn . snd)
-                          (sandbox (write ""))
-              -- force indent for top-level template haskell expressions, #473.
-              if col == 0
-                then do indentSpaces <- getIndentSpaces
-                        column indentSpaces (prettyWithIndent b)
-                else prettyWithIndent b
-            Just col -> do
-              indentSpaces <- getIndentSpaces
-              column (col + indentSpaces) (prettyWithIndent b)
+        prettyWithIndent a
+        indentSpaces <- getIndentSpaces
+        case a of
+            Do _ _ -> error "Unimplemented DO"
+            _ ->
+                case b of
+                    Do _ _ -> space >> pretty op
+                    -- Lambda _ _ _ -> space >> pretty op
+                    _ -> do
+                        newline
+                        level <- gets psIndentLevel
+                        column
+                            (level + indentSpaces `div` 2)
+                            (pretty op >> space)
+        case b of
+            InfixApp {} -> pretty b
+            -- Lambda _ _ _ -> space >> pretty b
+            Do _ stmts -> swing (write " do") $ lined (map pretty stmts)
+            _ -> indented indentSpaces (pretty b)
+
     prettyWithIndent e' =
-      case e' of
-        InfixApp _ a' op' b' -> infixApp e' a' op' b' indent
-        _ -> pretty e'
+        case e' of
+            InfixApp _ a' op' b' -> infixApp e' a' op' b' indent
+            _ -> pretty e'
+
 
 -- | A link in a chain of operator applications.
 data OpChainLink l
