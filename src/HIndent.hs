@@ -326,12 +326,10 @@ collectAllComments =
   shortCircuit
     (traverse
      -- First, collect forwards comments for declarations which both
-     -- start on column 1 and occur before the declaration.
+     -- start on any column and occur before the declaration.
        (collectCommentsBy
           CommentBeforeLine
           (\nodeSpan commentSpan ->
-              (snd (srcSpanStart nodeSpan) == 1 &&
-               snd (srcSpanStart commentSpan) == 1) &&
               fst (srcSpanStart commentSpan) < fst (srcSpanStart nodeSpan)))) .
   fmap nodify
   where
