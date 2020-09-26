@@ -2126,7 +2126,7 @@ infixApp e a op b indent = hor `ifFitsOnOneLineOrElse` ver
                         newline
                         level <- gets psIndentLevel
                         column
-                            (level + indentSpaces `div` 2)
+                            (level + indentSpaces)
                             (pretty op >> space)
         case b of
             InfixApp {} -> pretty b
