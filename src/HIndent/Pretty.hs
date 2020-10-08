@@ -2132,7 +2132,7 @@ infixApp e a op b indent = hor `ifFitsOnOneLineOrElse` ver
             InfixApp {} -> pretty b
             -- Lambda _ _ _ -> space >> pretty b
             Do _ stmts -> swing (write " do") $ lined (map pretty stmts)
-            _ -> indented indentSpaces (pretty b)
+            _ -> indented (indentSpaces + 2) (pretty b)
 
     prettyWithIndent e' =
         case e' of
