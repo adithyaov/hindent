@@ -2120,7 +2120,7 @@ infixApp e a op b indent = hor `ifFitsOnOneLineOrElse` ver
             Do _ _ -> error "Unimplemented DO"
             _ ->
                 case b of
-                    Do _ _ -> space >> pretty op
+                    -- Do _ _ -> space >> pretty op
                     -- Lambda _ _ _ -> space >> pretty op
                     _ -> do
                         newline
@@ -2130,7 +2130,7 @@ infixApp e a op b indent = hor `ifFitsOnOneLineOrElse` ver
             InfixApp {} -> pretty b
             -- Lambda _ _ _ -> space >> pretty b
             Do _ stmts ->
-                swing (write " do")
+                swing (write "do")
                     $ indented indentSpaces $ lined (map pretty stmts)
             _ -> indented (indentSpaces + 2) (pretty b)
 
