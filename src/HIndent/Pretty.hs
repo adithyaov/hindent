@@ -2125,13 +2125,13 @@ infixApp e a op b indent = hor `ifFitsOnOneLineOrElse` ver
                     _ -> do
                         newline
                         level <- gets psIndentLevel
-                        column
-                            (level + indentSpaces)
-                            (pretty op >> space)
+                        column (level + indentSpaces) (pretty op >> space)
         case b of
             InfixApp {} -> pretty b
             -- Lambda _ _ _ -> space >> pretty b
-            Do _ stmts -> swing (write " do") $ lined (map pretty stmts)
+            Do _ stmts ->
+                swing (write " do")
+                    $ indented indentSpaces $ lined (map pretty stmts)
             _ -> indented (indentSpaces + 2) (pretty b)
 
     prettyWithIndent e' =
